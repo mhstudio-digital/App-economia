@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1b6b3a" />
+  <title>Santamaría Runner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <div class="stage" id="stage">
+
+      <!-- HUD superior -->
+      <div class="hud" id="hud">
+        <div class="hud-left">
+          <div class="hud-pill">
+            <span class="hud-label">Puntos</span>
+            <span class="hud-value" id="ui-score">0</span>
+          </div>
+          <div class="hud-pill">
+            <span class="hud-label">Mejor</span>
+            <span class="hud-value" id="ui-best">0</span>
+          </div>
+        </div>
+
+        <div class="hud-center">
+          <div class="level-tag">Nivel <span id="ui-level">1</span><span class="level-total">/15</span></div>
+          <div class="progress">
+            <div class="progress-fill" id="ui-progress"></div>
+            <span class="progress-flame" id="ui-progress-flame">🔥</span>
+          </div>
+        </div>
+
+        <div class="hud-right">
+          <div class="hud-pill shield-pill" id="ui-shield-pill">
+            <span class="hud-label">Escudo</span>
+            <span class="hud-value" id="ui-shield">0</span>
+          </div>
+          <button class="icon-btn" id="btn-pause" aria-label="Pausa">II</button>
+        </div>
+      </div>
+
+      <!-- Lienzo del juego -->
+      <canvas id="game" width="960" height="400"></canvas>
+
+      <!-- Controles táctiles -->
+      <div class="touch-controls" id="touch-controls">
+        <button class="touch-btn" id="btn-jump" aria-label="Saltar">▲<small>Saltar</small></button>
+        <button class="touch-btn" id="btn-duck" aria-label="Agacharse">▼<small>Agacharse</small></button>
+      </div>
+
+      <!-- ====== PANTALLAS ====== -->
+
+      <!-- Inicio -->
+      <div class="screen show" id="screen-start">
+        <div class="panel">
+          <div class="emblem">🔥</div>
+          <h1 class="title">Santamaría<span>Runner</span></h1>
+          <p class="subtitle">La carrera del héroe nacional</p>
+          <p class="lore">
+            Corré junto a Juan Santamaría con la antorcha encendida a través
+            de un pueblo costarricense. Saltá obstáculos, recogé tesoros y
+            llegá al Mesón para encenderlo. <strong>15 niveles</strong> de pura gesta.
+          </p>
+          <div class="stats-row">
+            <div class="stat"><span id="start-best">0</span><small>Mejor puntuación</small></div>
+            <div class="stat"><span id="start-maxlevel">1</span><small>Nivel máximo</small></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn primary" id="btn-play">Jugar desde el inicio</button>
+            <button class="btn ghost hidden" id="btn-continue">Continuar (Nivel <span id="continue-level">1</span>)</button>
+          </div>
+          <button class="btn link" id="btn-howto">¿Cómo se juega?</button>
+        </div>
+      </div>
+
+      <!-- Cómo jugar -->
+      <div class="screen" id="screen-howto">
+        <div class="panel">
+          <h2 class="title-sm">Cómo se juega</h2>
+          <ul class="howto-list">
+            <li><b>Saltar:</b> Espacio · Flecha ↑ · W · Toque arriba</li>
+            <li><b>Agacharse:</b> Flecha ↓ · S · Toque abajo</li>
+            <li><b>Pausa:</b> P · Esc · botón II</li>
+            <li>🪙 Monedas y 🇨🇷 banderitas dan puntos.</li>
+            <li>🛡️ Escudos te protegen de un golpe.</li>
+            <li>🐦 Aves bajas: <b>saltá</b>. Aves altas: <b>no saltés</b> (corré o agachate).</li>
+            <li>Al final de cada nivel, encendé el <b>Mesón</b> con la antorcha.</li>
+          </ul>
+          <button class="btn primary" id="btn-howto-back">Entendido</button>
+        </div>
+      </div>
+
+      <!-- Pausa -->
+      <div class="screen" id="screen-pause">
+        <div class="panel">
+          <h2 class="title-sm">Pausa</h2>
+          <div class="btn-row column">
+            <button class="btn primary" id="btn-resume">Reanudar</button>
+            <button class="btn ghost" id="btn-restart-pause">Reiniciar nivel</button>
+            <button class="btn link" id="btn-menu-pause">Menú principal</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Over -->
+      <div class="screen" id="screen-gameover">
+        <div class="panel">
+          <div class="emblem sad">💨</div>
+          <h2 class="title-sm">La antorcha se apagó</h2>
+          <p class="lore" id="gameover-msg">El héroe cayó, pero la gesta continúa.</p>
+          <div class="stats-row">
+            <div class="stat"><span id="go-score">0</span><small>Puntuación</small></div>
+            <div class="stat"><span id="go-best">0</span><small>Mejor</small></div>
+            <div class="stat"><span id="go-level">1</span><small>Nivel</small></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn primary" id="btn-retry">Reintentar</button>
+            <button class="btn ghost" id="btn-menu-go">Menú</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nivel completado -->
+      <div class="screen" id="screen-levelcomplete">
+        <div class="panel">
+          <div class="emblem">🏚️🔥</div>
+          <h2 class="title-sm">¡Nivel <span id="lc-level">1</span> completado!</h2>
+          <p class="lore" id="lc-msg">El Mesón arde. ¡Por la libertad!</p>
+          <div class="stats-row">
+            <div class="stat"><span id="lc-score">0</span><small>Puntuación total</small></div>
+            <div class="stat"><span id="lc-bonus">+0</span><small>Bono de nivel</small></div>
+          </div>
+          <button class="btn primary" id="btn-next">Siguiente nivel →</button>
+        </div>
+      </div>
+
+      <!-- Victoria final -->
+      <div class="screen" id="screen-victory">
+        <div class="panel victory">
+          <div class="emblem big">🇨🇷🔥</div>
+          <h1 class="title">¡Victoria!</h1>
+          <p class="lore">
+            Has completado los 15 niveles. La gesta de Juan Santamaría
+            vive en cada paso. <strong>¡Pura vida y libertad!</strong>
+          </p>
+          <div class="stats-row">
+            <div class="stat"><span id="vic-score">0</span><small>Puntuación final</small></div>
+            <div class="stat"><span id="vic-best">0</span><small>Mejor histórica</small></div>
+          </div>
+          <button class="btn primary" id="btn-playagain">Jugar de nuevo</button>
+        </div>
+      </div>
+
+    </div>
+    <p class="footer-note">Hecho con HTML, CSS y JavaScript puro · Homenaje respetuoso al héroe nacional de Costa Rica</p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
