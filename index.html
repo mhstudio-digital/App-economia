@@ -2,162 +2,166 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#1b6b3a" />
-  <title>Santamaría Runner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SaldoSmart — Control de dinero</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app">
-    <div class="stage" id="stage">
-
-      <!-- HUD superior -->
-      <div class="hud" id="hud">
-        <div class="hud-left">
-          <div class="hud-pill">
-            <span class="hud-label">Puntos</span>
-            <span class="hud-value" id="ui-score">0</span>
-          </div>
-          <div class="hud-pill">
-            <span class="hud-label">Mejor</span>
-            <span class="hud-value" id="ui-best">0</span>
-          </div>
+    <!-- Header -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">S</div>
+        <div class="brand-text">
+          <h1>SaldoSmart</h1>
+          <span>Tu dinero, bajo control</span>
         </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost" id="btnExport">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Exportar CSV
+        </button>
+        <button class="btn btn-danger-ghost" id="btnReset">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 12a9 9 0 109-9 9 9 0 00-7 3.3M3 4v3.3H6.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Reiniciar
+        </button>
+      </div>
+    </header>
 
-        <div class="hud-center">
-          <div class="level-tag">Nivel <span id="ui-level">1</span><span class="level-total">/15</span></div>
-          <div class="progress">
-            <div class="progress-fill" id="ui-progress"></div>
-            <span class="progress-flame" id="ui-progress-flame">🔥</span>
-          </div>
-        </div>
+    <!-- Alert -->
+    <div id="alertBox" class="alert hidden"></div>
 
-        <div class="hud-right">
-          <div class="hud-pill shield-pill" id="ui-shield-pill">
-            <span class="hud-label">Escudo</span>
-            <span class="hud-value" id="ui-shield">0</span>
+    <!-- Summary cards -->
+    <section class="cards">
+      <div class="card card-hero">
+        <span class="card-label">Saldo actual</span>
+        <strong class="card-value" id="balance">₡0</strong>
+        <div class="progress">
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
           </div>
-          <button class="icon-btn" id="btn-pause" aria-label="Pausa">II</button>
+          <span class="progress-text" id="progressText">0% gastado</span>
         </div>
       </div>
 
-      <!-- Lienzo del juego -->
-      <canvas id="game" width="960" height="400"></canvas>
-
-      <!-- Controles táctiles -->
-      <div class="touch-controls" id="touch-controls">
-        <button class="touch-btn" id="btn-jump" aria-label="Saltar">▲<small>Saltar</small></button>
-        <button class="touch-btn" id="btn-duck" aria-label="Agacharse">▼<small>Agacharse</small></button>
+      <div class="card">
+        <span class="card-label income">Ingresos</span>
+        <strong class="card-value" id="totalIncome">₡0</strong>
+        <span class="card-sub">Dinero que entró</span>
       </div>
 
-      <!-- ====== PANTALLAS ====== -->
+      <div class="card">
+        <span class="card-label expense">Gastos</span>
+        <strong class="card-value" id="totalExpense">₡0</strong>
+        <span class="card-sub">Dinero que salió</span>
+      </div>
 
-      <!-- Inicio -->
-      <div class="screen show" id="screen-start">
-        <div class="panel">
-          <div class="emblem">🔥</div>
-          <h1 class="title">Santamaría<span>Runner</span></h1>
-          <p class="subtitle">La carrera del héroe nacional</p>
-          <p class="lore">
-            Corré junto a Juan Santamaría con la antorcha encendida a través
-            de un pueblo costarricense. Saltá obstáculos, recogé tesoros y
-            llegá al Mesón para encenderlo. <strong>15 niveles</strong> de pura gesta.
-          </p>
-          <div class="stats-row">
-            <div class="stat"><span id="start-best">0</span><small>Mejor puntuación</small></div>
-            <div class="stat"><span id="start-maxlevel">1</span><small>Nivel máximo</small></div>
-          </div>
-          <div class="btn-row">
-            <button class="btn primary" id="btn-play">Jugar desde el inicio</button>
-            <button class="btn ghost hidden" id="btn-continue">Continuar (Nivel <span id="continue-level">1</span>)</button>
-          </div>
-          <button class="btn link" id="btn-howto">¿Cómo se juega?</button>
+      <div class="card">
+        <span class="card-label">Movimientos</span>
+        <strong class="card-value" id="count">0</strong>
+        <span class="card-sub">Registros totales</span>
+      </div>
+    </section>
+
+    <div class="layout">
+      <!-- Form -->
+      <section class="panel form-panel">
+        <h2>Nuevo movimiento</h2>
+
+        <div class="seg" id="typeSeg">
+          <button type="button" class="seg-btn active" data-type="ingreso">Ingreso</button>
+          <button type="button" class="seg-btn" data-type="gasto">Gasto</button>
         </div>
-      </div>
 
-      <!-- Cómo jugar -->
-      <div class="screen" id="screen-howto">
-        <div class="panel">
-          <h2 class="title-sm">Cómo se juega</h2>
-          <ul class="howto-list">
-            <li><b>Saltar:</b> Espacio · Flecha ↑ · W · Toque arriba</li>
-            <li><b>Agacharse:</b> Flecha ↓ · S · Toque abajo</li>
-            <li><b>Pausa:</b> P · Esc · botón II</li>
-            <li>🪙 Monedas y 🇨🇷 banderitas dan puntos.</li>
-            <li>🛡️ Escudos te protegen de un golpe.</li>
-            <li>🐦 Aves bajas: <b>saltá</b>. Aves altas: <b>no saltés</b> (corré o agachate).</li>
-            <li>Al final de cada nivel, encendé el <b>Mesón</b> con la antorcha.</li>
-          </ul>
-          <button class="btn primary" id="btn-howto-back">Entendido</button>
-        </div>
-      </div>
-
-      <!-- Pausa -->
-      <div class="screen" id="screen-pause">
-        <div class="panel">
-          <h2 class="title-sm">Pausa</h2>
-          <div class="btn-row column">
-            <button class="btn primary" id="btn-resume">Reanudar</button>
-            <button class="btn ghost" id="btn-restart-pause">Reiniciar nivel</button>
-            <button class="btn link" id="btn-menu-pause">Menú principal</button>
+        <div class="field">
+          <label for="amount">Monto</label>
+          <div class="input-money">
+            <span>₡</span>
+            <input type="number" id="amount" placeholder="0" min="0" step="any" inputmode="decimal" />
           </div>
         </div>
-      </div>
 
-      <!-- Game Over -->
-      <div class="screen" id="screen-gameover">
-        <div class="panel">
-          <div class="emblem sad">💨</div>
-          <h2 class="title-sm">La antorcha se apagó</h2>
-          <p class="lore" id="gameover-msg">El héroe cayó, pero la gesta continúa.</p>
-          <div class="stats-row">
-            <div class="stat"><span id="go-score">0</span><small>Puntuación</small></div>
-            <div class="stat"><span id="go-best">0</span><small>Mejor</small></div>
-            <div class="stat"><span id="go-level">1</span><small>Nivel</small></div>
+        <div class="field">
+          <label for="category">Categoría</label>
+          <select id="category">
+            <option value="Comida">Comida</option>
+            <option value="Transporte">Transporte</option>
+            <option value="Estudio">Estudio</option>
+            <option value="Ropa">Ropa</option>
+            <option value="Salidas">Salidas</option>
+            <option value="Ahorro">Ahorro</option>
+            <option value="Servicios">Servicios</option>
+            <option value="Otros">Otros</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="detail">Detalle</label>
+          <input type="text" id="detail" placeholder="Ej. Almuerzo, salario, bus..." maxlength="60" />
+        </div>
+
+        <div class="field">
+          <label for="date">Fecha</label>
+          <input type="date" id="date" />
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" id="btnAdd">Agregar</button>
+          <button class="btn btn-ghost" id="btnClear">Limpiar</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label for="initialBalance">Saldo inicial</label>
+          <div class="initial-row">
+            <div class="input-money">
+              <span>₡</span>
+              <input type="number" id="initialBalance" placeholder="0" min="0" step="any" inputmode="decimal" />
+            </div>
+            <button class="btn btn-soft" id="btnSetInitial">Guardar</button>
           </div>
-          <div class="btn-row">
-            <button class="btn primary" id="btn-retry">Reintentar</button>
-            <button class="btn ghost" id="btn-menu-go">Menú</button>
+          <small class="hint">Tu punto de partida. Forma parte del dinero disponible.</small>
+        </div>
+      </section>
+
+      <!-- History -->
+      <section class="panel history-panel">
+        <div class="history-head">
+          <h2>Historial</h2>
+          <div class="filters">
+            <select id="filterType">
+              <option value="todos">Todos los tipos</option>
+              <option value="ingreso">Ingresos</option>
+              <option value="gasto">Gastos</option>
+            </select>
+            <select id="filterCategory">
+              <option value="todas">Todas las categorías</option>
+              <option value="Comida">Comida</option>
+              <option value="Transporte">Transporte</option>
+              <option value="Estudio">Estudio</option>
+              <option value="Ropa">Ropa</option>
+              <option value="Salidas">Salidas</option>
+              <option value="Ahorro">Ahorro</option>
+              <option value="Servicios">Servicios</option>
+              <option value="Otros">Otros</option>
+            </select>
           </div>
         </div>
-      </div>
 
-      <!-- Nivel completado -->
-      <div class="screen" id="screen-levelcomplete">
-        <div class="panel">
-          <div class="emblem">🏚️🔥</div>
-          <h2 class="title-sm">¡Nivel <span id="lc-level">1</span> completado!</h2>
-          <p class="lore" id="lc-msg">El Mesón arde. ¡Por la libertad!</p>
-          <div class="stats-row">
-            <div class="stat"><span id="lc-score">0</span><small>Puntuación total</small></div>
-            <div class="stat"><span id="lc-bonus">+0</span><small>Bono de nivel</small></div>
-          </div>
-          <button class="btn primary" id="btn-next">Siguiente nivel →</button>
+        <ul class="movements" id="movements"></ul>
+        <div class="empty" id="empty">
+          <div class="empty-icon">◎</div>
+          <p>Aún no hay movimientos.<br>Agrega tu primer ingreso o gasto.</p>
         </div>
-      </div>
-
-      <!-- Victoria final -->
-      <div class="screen" id="screen-victory">
-        <div class="panel victory">
-          <div class="emblem big">🇨🇷🔥</div>
-          <h1 class="title">¡Victoria!</h1>
-          <p class="lore">
-            Has completado los 15 niveles. La gesta de Juan Santamaría
-            vive en cada paso. <strong>¡Pura vida y libertad!</strong>
-          </p>
-          <div class="stats-row">
-            <div class="stat"><span id="vic-score">0</span><small>Puntuación final</small></div>
-            <div class="stat"><span id="vic-best">0</span><small>Mejor histórica</small></div>
-          </div>
-          <button class="btn primary" id="btn-playagain">Jugar de nuevo</button>
-        </div>
-      </div>
-
+      </section>
     </div>
-    <p class="footer-note">Hecho con HTML, CSS y JavaScript puro · Homenaje respetuoso al héroe nacional de Costa Rica</p>
+
+    <footer class="footer">SaldoSmart · Datos guardados en este dispositivo</footer>
   </div>
 
   <script src="script.js"></script>
