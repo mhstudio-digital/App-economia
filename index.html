@@ -1,218 +1,478 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SaldoSmart — Control de dinero</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>SaldoSmart</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-  <div class="app">
-    <!-- Header -->
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark">S</div>
-        <div class="brand-text">
-          <h1>SaldoSmart</h1>
-          <span>Tu dinero, bajo control</span>
+<div class="app" id="app">
+
+  <!-- ======= PAGES ======= -->
+  <div class="pages">
+
+    <!-- PAGE: INICIO -->
+    <div class="page active" id="page-home">
+      <header class="header">
+        <div class="header-left">
+          <p class="greeting-sub" id="greetingTime">Buenos días</p>
+          <h1 class="greeting-name" id="greetingName">Bienvenido</h1>
+        </div>
+        <div class="header-right">
+          <button class="icon-btn notif-btn" id="btnNotif" aria-label="Notificaciones">
+            <i class="ti ti-bell"></i>
+            <span class="notif-dot hidden" id="notifDot"></span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Notifications panel -->
+      <div class="notif-panel hidden" id="notifPanel">
+        <div class="notif-panel-header">
+          <span>Alertas</span>
+          <button class="icon-btn-sm" id="btnNotifClose"><i class="ti ti-x"></i></button>
+        </div>
+        <div class="notif-list" id="notifList">
+          <div class="notif-empty">Sin alertas activas</div>
         </div>
       </div>
-      <div class="topbar-actions">
-        <button class="btn btn-ghost" id="btnExport">
-          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Exportar CSV
-        </button>
-        <button class="btn btn-ghost" id="btnExportPDF">
-          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M7 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2h-2M7 21v-6a2 2 0 012-2h6a2 2 0 012 2v6M7 21h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Exportar PDF
-        </button>
-        <button class="btn btn-danger-ghost" id="btnReset">
-          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 12a9 9 0 109-9 9 9 0 00-7 3.3M3 4v3.3H6.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Reiniciar
-        </button>
-      </div>
-    </header>
 
-    <!-- Alert -->
-    <div id="alertBox" class="alert hidden"></div>
-
-    <!-- Summary cards -->
-    <section class="cards">
-      <div class="card card-hero">
-        <span class="card-label">Saldo actual</span>
-        <strong class="card-value" id="balance">₡0</strong>
-        <div class="progress">
+      <!-- Balance card -->
+      <div class="balance-card">
+        <div class="balance-card-top">
+          <span class="balance-label">Saldo actual</span>
+          <button class="icon-btn-sm eye-btn" id="btnToggleBalance" aria-label="Mostrar/ocultar saldo">
+            <i class="ti ti-eye" id="eyeIcon"></i>
+          </button>
+        </div>
+        <div class="balance-amount-row">
+          <span class="balance-amount" id="balanceDisplay">₡0</span>
+        </div>
+        <div class="balance-meta">
+          <div class="balance-meta-item income">
+            <i class="ti ti-arrow-down-left"></i>
+            <div>
+              <span class="meta-label">Ingresos</span>
+              <span class="meta-value" id="homeIncome">₡0</span>
+            </div>
+          </div>
+          <div class="balance-meta-divider"></div>
+          <div class="balance-meta-item expense">
+            <i class="ti ti-arrow-up-right"></i>
+            <div>
+              <span class="meta-label">Gastos</span>
+              <span class="meta-value" id="homeExpense">₡0</span>
+            </div>
+          </div>
+        </div>
+        <!-- Budget bar -->
+        <div class="budget-bar-wrap hidden" id="budgetBarWrap">
+          <div class="budget-bar-header">
+            <span>Presupuesto del mes</span>
+            <span id="budgetBarPct">0%</span>
+          </div>
           <div class="progress-track">
-            <div class="progress-fill" id="progressFill"></div>
+            <div class="progress-fill" id="budgetBarFill"></div>
           </div>
-          <span class="progress-text" id="progressText">0% gastado</span>
         </div>
       </div>
 
-      <div class="card">
-        <span class="card-label income">Ingresos</span>
-        <strong class="card-value" id="totalIncome">₡0</strong>
-        <span class="card-sub">Dinero que entró</span>
+      <!-- Quick actions -->
+      <div class="quick-actions">
+        <button class="quick-btn income-btn" id="qaIngreso">
+          <i class="ti ti-plus"></i>
+          <span>Ingreso</span>
+        </button>
+        <button class="quick-btn expense-btn" id="qaGasto">
+          <i class="ti ti-minus"></i>
+          <span>Gasto</span>
+        </button>
+        <button class="quick-btn" id="qaInsights">
+          <i class="ti ti-chart-bar"></i>
+          <span>Insights</span>
+        </button>
+        <button class="quick-btn" id="qaExport">
+          <i class="ti ti-download"></i>
+          <span>Exportar</span>
+        </button>
       </div>
 
-      <div class="card">
-        <span class="card-label expense">Gastos</span>
-        <strong class="card-value" id="totalExpense">₡0</strong>
-        <span class="card-sub">Dinero que salió</span>
+      <!-- Weekly chart card -->
+      <div class="card-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Esta semana</h2>
+          <span class="week-total" id="weekTotal">₡0</span>
+        </div>
+        <div class="weekly-chart">
+          <svg id="weekSvg" viewBox="0 0 320 80" preserveAspectRatio="none"></svg>
+          <div class="week-days" id="weekDays"></div>
+        </div>
       </div>
 
-      <div class="card">
-        <span class="card-label">Movimientos</span>
-        <strong class="card-value" id="count">0</strong>
-        <span class="card-sub">Registros totales</span>
+      <!-- Recent movements -->
+      <div class="card-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Movimientos recientes</h2>
+          <button class="text-btn" id="btnVerTodos">Ver todos</button>
+        </div>
+        <ul class="movement-list" id="homeMovements"></ul>
+        <div class="empty-state hidden" id="homeEmpty">
+          <i class="ti ti-inbox"></i>
+          <p>Sin movimientos aún</p>
+        </div>
       </div>
-    </section>
-
-    <!-- Chart: Ingresos vs Gastos por mes -->
-    <section class="panel chart-panel">
-      <h2>Ingresos vs Gastos por mes</h2>
-      <div class="chart-wrap" id="chartWrap">
-        <canvas id="monthChart"></canvas>
-      </div>
-      <div class="empty chart-empty hidden" id="chartEmpty">
-        <div class="empty-icon">📊</div>
-        <p>Agrega movimientos para ver la gráfica mensual.</p>
-      </div>
-    </section>
-
-    <div class="layout">
-      <!-- Form -->
-      <section class="panel form-panel">
-        <h2>Nuevo movimiento</h2>
-
-        <div class="seg" id="typeSeg">
-          <button type="button" class="seg-btn active" data-type="ingreso">Ingreso</button>
-          <button type="button" class="seg-btn" data-type="gasto">Gasto</button>
-        </div>
-
-        <div class="field">
-          <label for="amount">Monto</label>
-          <div class="input-money">
-            <span>₡</span>
-            <input type="number" id="amount" placeholder="0" min="0" step="any" inputmode="decimal" />
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="category">Categoría</label>
-          <select id="category">
-            <option value="Comida">Comida</option>
-            <option value="Transporte">Transporte</option>
-            <option value="Estudio">Estudio</option>
-            <option value="Ropa">Ropa</option>
-            <option value="Salidas">Salidas</option>
-            <option value="Ahorro">Ahorro</option>
-            <option value="Servicios">Servicios</option>
-            <option value="Otros">Otros</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="detail">Detalle</label>
-          <input type="text" id="detail" placeholder="Ej. Almuerzo, salario, bus..." maxlength="60" />
-        </div>
-
-        <div class="field">
-          <label for="date">Fecha</label>
-          <input type="date" id="date" />
-        </div>
-
-        <div class="form-actions">
-          <button class="btn btn-primary" id="btnAdd">Agregar</button>
-          <button class="btn btn-ghost" id="btnClear">Limpiar</button>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="field">
-          <label for="initialBalance">Saldo inicial</label>
-          <div class="initial-row">
-            <div class="input-money">
-              <span>₡</span>
-              <input type="number" id="initialBalance" placeholder="0" min="0" step="any" inputmode="decimal" />
-            </div>
-            <button class="btn btn-soft" id="btnSetInitial">Guardar</button>
-          </div>
-          <small class="hint">Tu punto de partida. Forma parte del dinero disponible.</small>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="field">
-          <label for="monthBudget">Presupuesto mensual</label>
-          <div class="initial-row">
-            <div class="input-money">
-              <span>₡</span>
-              <input type="number" id="monthBudget" placeholder="0" min="0" step="any" inputmode="decimal" />
-            </div>
-            <button class="btn btn-soft" id="btnSetBudget">Guardar</button>
-          </div>
-          <small class="hint">Límite de gasto para el mes actual.</small>
-        </div>
-        <div id="budgetStatus" class="budget-status hidden">
-          <div class="budget-row">
-            <span>Gastado este mes</span>
-            <strong id="budgetSpent">₡0</strong>
-          </div>
-          <div class="budget-row">
-            <span>Disponible</span>
-            <strong id="budgetLeft">₡0</strong>
-          </div>
-          <div class="budget-progress">
-            <div class="progress-track">
-              <div class="progress-fill" id="budgetFill"></div>
-            </div>
-            <span class="budget-pct" id="budgetPct">0% del presupuesto usado</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- History -->
-      <section class="panel history-panel">
-        <div class="history-head">
-          <h2>Historial</h2>
-          <div class="filters">
-            <select id="filterType">
-              <option value="todos">Todos los tipos</option>
-              <option value="ingreso">Ingresos</option>
-              <option value="gasto">Gastos</option>
-            </select>
-            <select id="filterCategory">
-              <option value="todas">Todas las categorías</option>
-              <option value="Comida">Comida</option>
-              <option value="Transporte">Transporte</option>
-              <option value="Estudio">Estudio</option>
-              <option value="Ropa">Ropa</option>
-              <option value="Salidas">Salidas</option>
-              <option value="Ahorro">Ahorro</option>
-              <option value="Servicios">Servicios</option>
-              <option value="Otros">Otros</option>
-            </select>
-          </div>
-        </div>
-
-        <ul class="movements" id="movements"></ul>
-        <div class="empty" id="empty">
-          <div class="empty-icon">◎</div>
-          <p>Aún no hay movimientos.<br>Agrega tu primer ingreso o gasto.</p>
-        </div>
-      </section>
     </div>
 
-    <footer class="footer">SaldoSmart · Datos guardados en este dispositivo</footer>
+    <!-- PAGE: INSIGHTS -->
+    <div class="page" id="page-insights">
+      <header class="header">
+        <h1 class="page-title">Insights</h1>
+      </header>
+
+      <div class="card-panel">
+        <h2 class="panel-title">Gastos por categoría</h2>
+        <div class="cat-bars" id="catBars">
+          <div class="empty-state"><i class="ti ti-chart-pie"></i><p>Sin datos aún</p></div>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">vs semana anterior</h2>
+        </div>
+        <div class="compare-grid" id="compareGrid">
+          <div class="compare-item">
+            <span class="compare-label">Esta semana</span>
+            <span class="compare-value" id="cmpThisWeek">₡0</span>
+          </div>
+          <div class="compare-item">
+            <span class="compare-label">Semana anterior</span>
+            <span class="compare-value" id="cmpLastWeek">₡0</span>
+          </div>
+          <div class="compare-item span2">
+            <span class="compare-label">Diferencia</span>
+            <span class="compare-value" id="cmpDiff">₡0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <h2 class="panel-title">Gastos por mes</h2>
+        <div class="monthly-chart-wrap">
+          <svg id="monthlySvg" viewBox="0 0 320 160"></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: CUENTAS -->
+    <div class="page" id="page-accounts">
+      <header class="header">
+        <h1 class="page-title">Cuentas</h1>
+        <button class="icon-btn" id="btnAddAccount" aria-label="Agregar cuenta">
+          <i class="ti ti-plus"></i>
+        </button>
+      </header>
+
+      <div class="card-panel">
+        <ul class="account-list" id="accountList"></ul>
+        <div class="account-total-row">
+          <span>Saldo neto total</span>
+          <span class="account-net-total" id="accountNetTotal">₡0</span>
+        </div>
+      </div>
+
+      <!-- Account movements (filtradas) -->
+      <div class="card-panel hidden" id="accountMovsPanel">
+        <div class="panel-header">
+          <h2 class="panel-title" id="accountMovsTitle">Movimientos</h2>
+          <button class="text-btn" id="btnCloseAcctMovs"><i class="ti ti-x"></i></button>
+        </div>
+        <ul class="movement-list" id="accountMovsList"></ul>
+        <div class="empty-state hidden" id="accountMovsEmpty">
+          <i class="ti ti-inbox"></i><p>Sin movimientos</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: PERFIL -->
+    <div class="page" id="page-profile">
+      <header class="header">
+        <h1 class="page-title">Perfil</h1>
+      </header>
+
+      <!-- Avatar + nombre -->
+      <div class="profile-hero card-panel">
+        <div class="avatar" id="avatarDisplay">U</div>
+        <div class="profile-info">
+          <input class="profile-name-input" id="profileName" value="Usuario" maxlength="30" />
+          <span class="profile-sub">Toca el nombre para editar</span>
+        </div>
+        <div class="theme-toggle-wrap">
+          <span>Tema</span>
+          <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema">
+            <i class="ti ti-moon" id="themeIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Presupuesto -->
+      <div class="card-panel profile-section">
+        <h2 class="section-title"><i class="ti ti-target"></i> Presupuesto mensual</h2>
+        <div class="input-row">
+          <div class="input-money-field">
+            <span id="currencySymbol">₡</span>
+            <input type="number" id="profileBudget" placeholder="0" min="0" inputmode="decimal" />
+          </div>
+          <button class="btn-gold" id="btnSaveBudget">Guardar</button>
+        </div>
+      </div>
+
+      <!-- Moneda -->
+      <div class="card-panel profile-section">
+        <h2 class="section-title"><i class="ti ti-coin"></i> Moneda</h2>
+        <select id="currencySelect" class="select-field">
+          <option value="₡">₡ Colón (CRC)</option>
+          <option value="$">$ Dólar (USD)</option>
+          <option value="€">€ Euro (EUR)</option>
+          <option value="₲">₲ Guaraní (PYG)</option>
+          <option value="S/">S/ Sol (PEN)</option>
+        </select>
+      </div>
+
+      <!-- Categorías -->
+      <div class="card-panel profile-section">
+        <div class="section-header">
+          <h2 class="section-title"><i class="ti ti-tag"></i> Categorías</h2>
+          <button class="btn-gold-sm" id="btnAddCategory">Agregar</button>
+        </div>
+        <ul class="category-list" id="categoryList"></ul>
+      </div>
+
+      <!-- Exportar -->
+      <div class="card-panel profile-section">
+        <h2 class="section-title"><i class="ti ti-file-export"></i> Exportar datos</h2>
+        <div class="export-btns">
+          <button class="btn-outline" id="btnExportCSV"><i class="ti ti-file-text"></i> CSV</button>
+          <button class="btn-outline" id="btnExportPDF"><i class="ti ti-file-type-pdf"></i> PDF</button>
+        </div>
+      </div>
+
+      <!-- Borrar historial -->
+      <div class="card-panel profile-section danger-section">
+        <h2 class="section-title danger-title"><i class="ti ti-trash"></i> Zona peligrosa</h2>
+        <button class="btn-danger" id="btnClearHistory">Borrar historial</button>
+      </div>
+    </div>
+
+  </div><!-- /pages -->
+
+  <!-- ======= BOTTOM NAV ======= -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-page="home">
+      <i class="ti ti-home"></i>
+      <span>Inicio</span>
+    </button>
+    <button class="nav-btn" data-page="insights">
+      <i class="ti ti-chart-bar"></i>
+      <span>Insights</span>
+    </button>
+    <button class="nav-btn nav-center" id="btnAddMovement" aria-label="Nuevo movimiento">
+      <div class="nav-center-inner">
+        <i class="ti ti-plus"></i>
+      </div>
+    </button>
+    <button class="nav-btn" data-page="accounts">
+      <i class="ti ti-wallet"></i>
+      <span>Cuentas</span>
+    </button>
+    <button class="nav-btn" data-page="profile">
+      <i class="ti ti-user"></i>
+      <span>Perfil</span>
+    </button>
+  </nav>
+
+  <!-- ======= MODAL: NUEVO MOVIMIENTO ======= -->
+  <div class="modal-overlay hidden" id="modalMovement">
+    <div class="bottom-sheet" id="sheetMovement">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h2 class="sheet-title">Nuevo movimiento</h2>
+        <button class="icon-btn-sm" id="btnCloseMovement"><i class="ti ti-x"></i></button>
+      </div>
+
+      <div class="seg-control" id="movTypeSeg">
+        <button class="seg-btn active" data-type="ingreso">Ingreso</button>
+        <button class="seg-btn" data-type="gasto">Gasto</button>
+      </div>
+
+      <div class="amount-preview">
+        <span id="currencyPreview">₡</span>
+        <span class="amount-big" id="amountPreview">0</span>
+      </div>
+
+      <div class="sheet-form">
+        <div class="field-group">
+          <label>Monto</label>
+          <div class="input-money-field">
+            <span class="currency-sym" id="currSymMov">₡</span>
+            <input type="number" id="movAmount" placeholder="0" min="0" step="any" inputmode="decimal" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>Categoría</label>
+          <select id="movCategory" class="select-field"></select>
+        </div>
+
+        <div class="field-group">
+          <label>Cuenta</label>
+          <select id="movAccount" class="select-field"></select>
+        </div>
+
+        <div class="field-group">
+          <label>Detalle</label>
+          <input type="text" id="movDetail" class="text-input" placeholder="Descripción opcional..." maxlength="60" />
+        </div>
+
+        <div class="field-group">
+          <label>Fecha</label>
+          <input type="date" id="movDate" class="text-input" />
+        </div>
+
+        <button class="btn-gold full-width" id="btnSaveMovement">Agregar movimiento</button>
+      </div>
+    </div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- ======= MODAL: DETALLE MOVIMIENTO ======= -->
+  <div class="modal-overlay hidden" id="modalMovDetail">
+    <div class="bottom-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h2 class="sheet-title">Detalle</h2>
+        <button class="icon-btn-sm" id="btnCloseMovDetail"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="mov-detail-body" id="movDetailBody"></div>
+      <button class="btn-danger full-width mt-16" id="btnDeleteMovDetail">Eliminar movimiento</button>
+    </div>
+  </div>
+
+  <!-- ======= MODAL: CUENTA ======= -->
+  <div class="modal-overlay hidden" id="modalAccount">
+    <div class="bottom-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h2 class="sheet-title" id="accountModalTitle">Nueva cuenta</h2>
+        <button class="icon-btn-sm" id="btnCloseAccount"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="sheet-form">
+        <div class="field-group">
+          <label>Nombre</label>
+          <input type="text" id="accountName" class="text-input" placeholder="Ej. Banco Nacional" maxlength="30" />
+        </div>
+        <div class="field-group">
+          <label>Tipo</label>
+          <select id="accountType" class="select-field">
+            <option value="cash">Efectivo</option>
+            <option value="bank">Banco</option>
+            <option value="sinpe">Sinpe</option>
+            <option value="card">Tarjeta</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Saldo inicial</label>
+          <div class="input-money-field">
+            <span class="currency-sym" id="currSymAcct">₡</span>
+            <input type="number" id="accountBalance" placeholder="0" min="0" step="any" inputmode="decimal" />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-gold full-width" id="btnSaveAccount">Guardar cuenta</button>
+          <button class="btn-danger-outline full-width hidden mt-8" id="btnDeleteAccount">Eliminar cuenta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= MODAL: CATEGORÍA ======= -->
+  <div class="modal-overlay hidden" id="modalCategory">
+    <div class="bottom-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h2 class="sheet-title" id="catModalTitle">Nueva categoría</h2>
+        <button class="icon-btn-sm" id="btnCloseCat"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="sheet-form">
+        <div class="field-group">
+          <label>Nombre</label>
+          <input type="text" id="catName" class="text-input" placeholder="Ej. Salud" maxlength="25" />
+        </div>
+        <div class="field-group">
+          <label>Icono Tabler (nombre del icono)</label>
+          <input type="text" id="catIcon" class="text-input" placeholder="Ej. heart, coffee, car..." />
+        </div>
+        <div class="field-group">
+          <label>Color</label>
+          <div class="color-picker" id="colorPicker"></div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-gold full-width" id="btnSaveCategory">Guardar</button>
+          <button class="btn-danger-outline full-width hidden mt-8" id="btnDeleteCategory">Eliminar categoría</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= MODAL: EXPORTAR ======= -->
+  <div class="modal-overlay hidden" id="modalExport">
+    <div class="bottom-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h2 class="sheet-title">Exportar datos</h2>
+        <button class="icon-btn-sm" id="btnCloseExport"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="sheet-form">
+        <button class="export-option-btn" id="btnDlCSV">
+          <i class="ti ti-file-text"></i>
+          <div>
+            <strong>Exportar CSV</strong>
+            <span>Compatible con Excel y Google Sheets</span>
+          </div>
+          <i class="ti ti-chevron-right"></i>
+        </button>
+        <button class="export-option-btn" id="btnDlPDF">
+          <i class="ti ti-file-type-pdf"></i>
+          <div>
+            <strong>Exportar PDF</strong>
+            <span>Reporte completo con resumen</span>
+          </div>
+          <i class="ti ti-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= MODAL: CONFIRMAR BORRAR ======= -->
+  <div class="modal-overlay hidden" id="modalConfirm">
+    <div class="confirm-dialog">
+      <div class="confirm-icon"><i class="ti ti-alert-triangle"></i></div>
+      <h2 class="confirm-title" id="confirmTitle">Confirmar acción</h2>
+      <p class="confirm-body" id="confirmBody">Esta acción no se puede deshacer.</p>
+      <div class="confirm-actions">
+        <button class="btn-outline" id="btnConfirmCancel">Cancelar</button>
+        <button class="btn-danger" id="btnConfirmOk">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+<script src="script.js"></script>
 </body>
 </html>
