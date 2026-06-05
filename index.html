@@ -8,6 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
   <div class="app">
@@ -24,6 +27,10 @@
         <button class="btn btn-ghost" id="btnExport">
           <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Exportar CSV
+        </button>
+        <button class="btn btn-ghost" id="btnExportPDF">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M7 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2h-2M7 21v-6a2 2 0 012-2h6a2 2 0 012 2v6M7 21h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Exportar PDF
         </button>
         <button class="btn btn-danger-ghost" id="btnReset">
           <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 12a9 9 0 109-9 9 9 0 00-7 3.3M3 4v3.3H6.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -64,6 +71,18 @@
         <span class="card-label">Movimientos</span>
         <strong class="card-value" id="count">0</strong>
         <span class="card-sub">Registros totales</span>
+      </div>
+    </section>
+
+    <!-- Chart: Ingresos vs Gastos por mes -->
+    <section class="panel chart-panel">
+      <h2>Ingresos vs Gastos por mes</h2>
+      <div class="chart-wrap" id="chartWrap">
+        <canvas id="monthChart"></canvas>
+      </div>
+      <div class="empty chart-empty hidden" id="chartEmpty">
+        <div class="empty-icon">📊</div>
+        <p>Agrega movimientos para ver la gráfica mensual.</p>
       </div>
     </section>
 
@@ -126,6 +145,36 @@
             <button class="btn btn-soft" id="btnSetInitial">Guardar</button>
           </div>
           <small class="hint">Tu punto de partida. Forma parte del dinero disponible.</small>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label for="monthBudget">Presupuesto mensual</label>
+          <div class="initial-row">
+            <div class="input-money">
+              <span>₡</span>
+              <input type="number" id="monthBudget" placeholder="0" min="0" step="any" inputmode="decimal" />
+            </div>
+            <button class="btn btn-soft" id="btnSetBudget">Guardar</button>
+          </div>
+          <small class="hint">Límite de gasto para el mes actual.</small>
+        </div>
+        <div id="budgetStatus" class="budget-status hidden">
+          <div class="budget-row">
+            <span>Gastado este mes</span>
+            <strong id="budgetSpent">₡0</strong>
+          </div>
+          <div class="budget-row">
+            <span>Disponible</span>
+            <strong id="budgetLeft">₡0</strong>
+          </div>
+          <div class="budget-progress">
+            <div class="progress-track">
+              <div class="progress-fill" id="budgetFill"></div>
+            </div>
+            <span class="budget-pct" id="budgetPct">0% del presupuesto usado</span>
+          </div>
         </div>
       </section>
 

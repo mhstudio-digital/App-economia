@@ -190,6 +190,23 @@ select { cursor: pointer; appearance: none; background-image: url("data:image/sv
 .empty-icon { font-size: 38px; opacity: .4; margin-bottom: 10px; }
 .empty p { font-size: 14px; line-height: 1.6; }
 
+/* Chart */
+.chart-panel { margin-bottom: 18px; }
+.chart-wrap { position: relative; height: 260px; }
+.chart-empty { padding: 28px 20px; }
+
+/* Budget */
+.budget-status { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+.budget-row { display: flex; justify-content: space-between; align-items: center; font-size: 13.5px; }
+.budget-row span { color: var(--text-soft); }
+.budget-row strong { font-family: 'Bricolage Grotesque'; font-weight: 700; font-size: 15px; }
+.budget-progress { margin-top: 4px; }
+.budget-progress .progress-track { background: var(--surface-2); border: 1px solid var(--border); }
+.budget-progress .progress-fill { background: var(--income); }
+.budget-progress .progress-fill.warn { background: var(--warn); }
+.budget-progress .progress-fill.bad { background: var(--expense); }
+.budget-pct { display: block; margin-top: 6px; font-size: 12.5px; color: var(--text-mute); font-weight: 600; }
+
 .footer { text-align: center; margin-top: 28px; font-size: 12.5px; color: var(--text-mute); }
 
 @keyframes pop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }

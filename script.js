@@ -1,12 +1,13 @@
 /* ===== SaldoSmart ===== */
 const STORE_KEY = 'saldosmart_v1';
+let chartInstance = null;
 
 const CAT_ICONS = {
   Comida: '🍽️', Transporte: '🚌', Estudio: '📚', Ropa: '👕',
   Salidas: '🎉', Ahorro: '🐷', Servicios: '💡', Otros: '📦'
 };
 
-let state = { initial: 0, movements: [] };
+let state = { initial: 0, movements: [], budget: 0 };
 
 /* ---- Persistencia ---- */
 function load() {
@@ -16,6 +17,7 @@ function load() {
   } catch (e) { state = { initial: 0, movements: [] }; }
   if (!Array.isArray(state.movements)) state.movements = [];
   if (typeof state.initial !== 'number') state.initial = 0;
+  if (typeof state.budget !== 'number') state.budget = 0;
 }
 function save() {
   localStorage.setItem(STORE_KEY, JSON.stringify(state));
@@ -45,7 +47,10 @@ const el = {
   alert: $('alertBox'), movements: $('movements'), empty: $('empty'),
   amount: $('amount'), category: $('category'), detail: $('detail'), date: $('date'),
   initial: $('initialBalance'),
-  filterType: $('filterType'), filterCategory: $('filterCategory')
+  filterType: $('filterType'), filterCategory: $('filterCategory'),
+  budget: $('monthBudget'), budgetStatus: $('budgetStatus'),
+  budgetSpent: $('budgetSpent'), budgetLeft: $('budgetLeft'),
+  budgetFill: $('budgetFill'), budgetPct: $('budgetPct')
 };
 
 let currentType = 'ingreso';
@@ -81,6 +86,8 @@ function render() {
 
   renderAlert(c);
   renderList();
+  renderChart();
+  renderBudget();
   save();
 }
 
@@ -142,6 +149,165 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+/* ---- Gráfica mensual ---- */
+function renderChart() {
+  const wrap = $('chartWrap');
+  const empty = $('chartEmpty');
+
+  if (state.movements.length === 0) {
+    if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+    wrap.classList.add('hidden');
+    empty.classList.remove('hidden');
+    return;
+  }
+  wrap.classList.remove('hidden');
+  empty.classList.add('hidden');
+
+  const byMonth = {};
+  for (const m of state.movements) {
+    const key = m.date.slice(0, 7);
+    if (!byMonth[key]) byMonth[key] = { income: 0, expense: 0 };
+    if (m.type === 'ingreso') byMonth[key].income += m.amount;
+    else byMonth[key].expense += m.amount;
+  }
+  const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const keys = Object.keys(byMonth).sort();
+  const labels = keys.map(k => { const [y, mn] = k.split('-'); return MONTHS[+mn - 1] + ' ' + y.slice(2); });
+
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart($('monthChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Ingresos', data: keys.map(k => byMonth[k].income), backgroundColor: 'rgba(10,159,110,0.75)', borderRadius: 6 },
+        { label: 'Gastos',   data: keys.map(k => byMonth[k].expense), backgroundColor: 'rgba(229,72,77,0.75)',  borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#94A3B8', font: { family: 'Manrope', size: 13, weight: '600' } } },
+        tooltip: { callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + money(ctx.raw) } }
+      },
+      scales: {
+        x: { ticks: { color: '#64748B', font: { family: 'Manrope' } }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.08)' } },
+        y: { ticks: { color: '#64748B', font: { family: 'Manrope' }, callback: v => '₡' + (v >= 1000 ? Math.round(v / 1000) + 'k' : v) }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false } }
+      }
+    }
+  });
+}
+
+/* ---- Presupuesto mensual ---- */
+function renderBudget() {
+  if (!state.budget || state.budget <= 0) { el.budgetStatus.classList.add('hidden'); return; }
+
+  const curMonth = todayISO().slice(0, 7);
+  let spent = 0;
+  for (const m of state.movements) {
+    if (m.type === 'gasto' && m.date.slice(0, 7) === curMonth) spent += m.amount;
+  }
+  const left = state.budget - spent;
+  const pct = Math.min(100, Math.round((spent / state.budget) * 100));
+
+  el.budgetSpent.textContent = money(spent);
+  el.budgetLeft.textContent = money(Math.max(0, left));
+  el.budgetPct.textContent = pct + '% del presupuesto usado';
+
+  el.budgetFill.style.width = pct + '%';
+  el.budgetFill.classList.remove('warn', 'bad');
+  if (pct > 80) el.budgetFill.classList.add('bad');
+  else if (pct > 50) el.budgetFill.classList.add('warn');
+
+  el.budgetStatus.classList.remove('hidden');
+}
+
+function setBudget() {
+  const v = parseFloat(el.budget.value);
+  state.budget = (!isNaN(v) && v > 0) ? v : 0;
+  render();
+}
+
+/* ---- Exportar PDF ---- */
+function exportPDF() {
+  if (state.movements.length === 0) { alert('No hay movimientos para exportar.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const c = compute();
+  const now = todayISO();
+
+  // Header
+  doc.setFillColor(47, 91, 255);
+  doc.rect(0, 0, 210, 30, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(22); doc.setFont('helvetica', 'bold');
+  doc.text('SaldoSmart', 14, 19);
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+  doc.text('Reporte generado el ' + fmtDate(now), 14, 26);
+
+  // Summary
+  doc.setTextColor(30, 30, 30);
+  doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+  doc.text('Resumen financiero', 14, 46);
+
+  const summaryRows = [
+    ['Saldo actual', money(c.balance)],
+    ['Total ingresos', money(c.income)],
+    ['Total gastos', money(c.expense)],
+    ['Movimientos totales', String(state.movements.length)],
+  ];
+  if (state.budget > 0) {
+    const curMonth = now.slice(0, 7);
+    let monthSpent = 0;
+    for (const m of state.movements) {
+      if (m.type === 'gasto' && m.date.slice(0, 7) === curMonth) monthSpent += m.amount;
+    }
+    summaryRows.push(['Presupuesto mensual', money(state.budget)]);
+    summaryRows.push(['Gastado este mes', money(monthSpent)]);
+  }
+
+  doc.autoTable({
+    body: summaryRows, startY: 52, theme: 'plain',
+    styles: { fontSize: 11 },
+    columnStyles: {
+      0: { fontStyle: 'bold', textColor: [80, 80, 100], cellWidth: 80 },
+      1: { halign: 'right', textColor: [15, 15, 30] }
+    },
+    margin: { left: 14, right: 14 }
+  });
+
+  const tableY = doc.lastAutoTable.finalY + 16;
+  doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 30, 30);
+  doc.text('Historial de movimientos', 14, tableY);
+
+  const rows = state.movements
+    .slice().sort((a, b) => a.date.localeCompare(b.date))
+    .map(m => [
+      m.type === 'ingreso' ? 'Ingreso' : 'Gasto',
+      money(m.amount), m.category,
+      (m.detail || '').slice(0, 35),
+      fmtDate(m.date)
+    ]);
+
+  doc.autoTable({
+    head: [['Tipo', 'Monto', 'Categoría', 'Detalle', 'Fecha']],
+    body: rows, startY: tableY + 6, theme: 'grid',
+    headStyles: { fillColor: [47, 91, 255], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 10 },
+    alternateRowStyles: { fillColor: [245, 247, 252] },
+    styles: { fontSize: 9.5 },
+    columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'right' } },
+    didParseCell: data => {
+      if (data.section === 'body' && data.column.index === 0) {
+        data.cell.styles.textColor = data.row.raw[0] === 'Ingreso' ? [10, 120, 80] : [200, 50, 55];
+      }
+    },
+    margin: { left: 14, right: 14 }
+  });
+
+  doc.save('saldosmart_' + now + '.pdf');
+}
+
 /* ---- Acciones ---- */
 function addMovement() {
   const amount = parseFloat(el.amount.value);
@@ -179,8 +345,9 @@ function clearForm() {
 
 function resetAll() {
   if (!confirm('¿Seguro que quieres reiniciar todo? Se borrarán el saldo inicial y todos los movimientos.')) return;
-  state = { initial: 0, movements: [] };
+  state = { initial: 0, movements: [], budget: 0 };
   el.initial.value = '';
+  el.budget.value = '';
   clearForm();
   el.filterType.value = 'todos';
   el.filterCategory.value = 'todas';
@@ -222,7 +389,9 @@ $('btnAdd').addEventListener('click', addMovement);
 $('btnClear').addEventListener('click', clearForm);
 $('btnReset').addEventListener('click', resetAll);
 $('btnExport').addEventListener('click', exportCSV);
+$('btnExportPDF').addEventListener('click', exportPDF);
 $('btnSetInitial').addEventListener('click', setInitial);
+$('btnSetBudget').addEventListener('click', setBudget);
 el.filterType.addEventListener('change', renderList);
 el.filterCategory.addEventListener('change', renderList);
 
@@ -230,9 +399,11 @@ el.filterCategory.addEventListener('change', renderList);
   node.addEventListener('keydown', e => { if (e.key === 'Enter') addMovement(); })
 );
 el.initial.addEventListener('keydown', e => { if (e.key === 'Enter') setInitial(); });
+el.budget.addEventListener('keydown', e => { if (e.key === 'Enter') setBudget(); });;
 
 /* ---- Init ---- */
 load();
 el.date.value = todayISO();
 if (state.initial) el.initial.value = state.initial;
+if (state.budget) el.budget.value = state.budget;
 render();
